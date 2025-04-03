@@ -1,24 +1,24 @@
-'use client';
+"use client";
 
-import { useState, useRef, useEffect } from 'react';
-import ReactMarkdown from 'react-markdown';
-import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
-import type { SyntaxHighlighterProps } from 'react-syntax-highlighter';
+import { useState, useRef, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
+import { PrismLight as SyntaxHighlighter } from "react-syntax-highlighter";
+import { oneDark } from "react-syntax-highlighter/dist/cjs/styles/prism";
+import type { SyntaxHighlighterProps } from "react-syntax-highlighter";
 
 interface Message {
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
 }
 
 export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
@@ -30,33 +30,37 @@ export default function Chat() {
     if (!input.trim()) return;
 
     const userMessage: Message = {
-      role: 'user',
+      role: "user",
       content: input,
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    setInput('');
+    setInput("");
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8080/api/chat', {
-        method: 'POST',
+      if (!process.env.NEXT_PUBLIC_API_URL) {
+        throw new Error("API URL is not defined. Please set NEXT_PUBLIC_API_URL environment variable.");
+      }
+
+      const response = await fetch(process.env.NEXT_PUBLIC_API_URL, {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(userMessage),
       });
 
       const data = await response.json();
-      
+
       const assistantMessage: Message = {
-        role: 'assistant',
+        role: "assistant",
         content: data.message,
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
-      console.error('Error:', error);
+      console.error("Error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -69,20 +73,20 @@ export default function Chat() {
           <div
             key={index}
             className={`flex ${
-              message.role === 'user' ? 'justify-end' : 'justify-start'
+              message.role === "user" ? "justify-end" : "justify-start"
             }`}
           >
             <div
               className={`max-w-3xl rounded-lg p-4 ${
-                message.role === 'user'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white shadow-md text-black'
+                message.role === "user"
+                  ? "bg-blue-600 text-white"
+                  : "bg-white shadow-md text-black"
               }`}
             >
               <ReactMarkdown
                 components={{
                   code({ className, children, ...props }) {
-                    const match = /language-(\w+)/.exec(className || '');
+                    const match = /language-(\w+)/.exec(className || "");
                     return match ? (
                       <SyntaxHighlighter
                         style={oneDark}
@@ -90,7 +94,7 @@ export default function Chat() {
                         PreTag="div"
                         {...(props as SyntaxHighlighterProps)}
                       >
-                        {String(children).replace(/\n$/, '')}
+                        {String(children).replace(/\n$/, "")}
                       </SyntaxHighlighter>
                     ) : (
                       <code className={className} {...props}>
@@ -138,4 +142,5 @@ export default function Chat() {
       </form>
     </div>
   );
-} 
+}
+
