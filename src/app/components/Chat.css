@@ -140,16 +140,22 @@
   border-top: 1px solid #e5e7eb;
   background-color: white;
   padding: 1rem;
+  width: 100%;
 }
 
 .input-form {
-  max-width: 64rem;
+  width: 100%;
+  max-width: 100%;
+  padding: 0 1rem;
   margin: 0 auto;
 }
 
 .input-wrapper {
   display: flex;
   gap: 1rem;
+  width: 100%;
+  max-width: 90%;
+  margin: 0 auto;
 }
 
 .chat-input {
@@ -159,6 +165,7 @@
   border-radius: 0.75rem;
   color: #1f2937;
   background-color: white;
+  width: 100%;
 }
 
 .chat-input:focus {
