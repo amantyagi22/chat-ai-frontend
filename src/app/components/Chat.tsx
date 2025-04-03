@@ -5,6 +5,7 @@ import ReactMarkdown from "react-markdown";
 import { PrismLight as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/cjs/styles/prism";
 import type { SyntaxHighlighterProps } from "react-syntax-highlighter";
+import "./Chat.css";
 
 interface Message {
   role: "user" | "assistant";
@@ -16,6 +17,7 @@ export default function Chat() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const backendLink = process.env.NEXT_PUBLIC_API_URL;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -39,11 +41,11 @@ export default function Chat() {
     setIsLoading(true);
 
     try {
-      if (!process.env.NEXT_PUBLIC_API_URL) {
+      if (!backendLink) {
         throw new Error("API URL is not defined. Please set NEXT_PUBLIC_API_URL environment variable.");
       }
 
-      const response = await fetch(process.env.NEXT_PUBLIC_API_URL, {
+      const response = await fetch(`${backendLink}/api/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -67,22 +69,33 @@ export default function Chat() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div className="chat-container">
+      <div className="chat-header">
+        <h1 className="chat-title">AI Assistant</h1>
+      </div>
+
+      <div className="messages-container">
+        {messages.length === 0 && (
+          <div className="welcome-container">
+            <svg xmlns="http://www.w3.org/2000/svg" className="welcome-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            <p className="welcome-text">Welcome! How can I help you today?</p>
+          </div>
+        )}
+        
         {messages.map((message, index) => (
           <div
             key={index}
-            className={`flex ${
-              message.role === "user" ? "justify-end" : "justify-start"
-            }`}
+            className={`message-wrapper ${message.role}`}
           >
-            <div
-              className={`max-w-3xl rounded-lg p-4 ${
-                message.role === "user"
-                  ? "bg-blue-600 text-white"
-                  : "bg-white shadow-md text-black"
-              }`}
-            >
+            {message.role === "assistant" && (
+              <div className="avatar assistant">
+                AI
+              </div>
+            )}
+            
+            <div className={`message ${message.role}`}>
               <ReactMarkdown
                 components={{
                   code({ className, children, ...props }) {
@@ -97,7 +110,7 @@ export default function Chat() {
                         {String(children).replace(/\n$/, "")}
                       </SyntaxHighlighter>
                     ) : (
-                      <code className={className} {...props}>
+                      <code {...props}>
                         {children}
                       </code>
                     );
@@ -107,39 +120,52 @@ export default function Chat() {
                 {message.content}
               </ReactMarkdown>
             </div>
+
+            {message.role === "user" && (
+              <div className="avatar user">
+                U
+              </div>
+            )}
           </div>
         ))}
+        
         {isLoading && (
-          <div className="flex justify-start">
-            <div className="bg-white shadow-md rounded-lg p-4">
-              <div className="animate-pulse flex space-x-2">
-                <div className="h-2 w-2 bg-gray-400 rounded-full"></div>
-                <div className="h-2 w-2 bg-gray-400 rounded-full"></div>
-                <div className="h-2 w-2 bg-gray-400 rounded-full"></div>
+          <div className="loading-container">
+            <div className="avatar assistant">
+              AI
+            </div>
+            <div className="message assistant">
+              <div className="loading-dots">
+                <div className="loading-dot"></div>
+                <div className="loading-dot"></div>
+                <div className="loading-dot"></div>
               </div>
             </div>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
-      <form onSubmit={handleSubmit} className="p-4 border-t bg-white">
-        <div className="flex space-x-4">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your message..."
-            className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-          />
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-          >
-            Send
-          </button>
-        </div>
-      </form>
+
+      <div className="input-container">
+        <form onSubmit={handleSubmit} className="input-form">
+          <div className="input-wrapper">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Type your message..."
+              className="chat-input"
+            />
+            <button
+              type="submit"
+              disabled={isLoading || !input.trim()}
+              className="send-button"
+            >
+              Send
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
